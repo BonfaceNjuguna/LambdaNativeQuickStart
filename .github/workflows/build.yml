@@ -59,7 +59,7 @@ jobs:
       working-directory: lambdanative
       run: |
        ./configure ExpenseTracker
-       make
+       make VERBOSE=1
     - name: android builds
       working-directory: lambdanative
       run: |
@@ -68,7 +68,7 @@ jobs:
        # Make directory to avoid errors during build
        mkdir -p /home/build/.cache/lambdanative/android/support
        ./configure ExpenseTracker android debug
-       make
+       make VERBOSE=1
     - uses: actions/upload-artifact@v4
       with:
        name: apk
