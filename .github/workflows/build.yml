@@ -1,4 +1,4 @@
-name: fedora-build
+name: debian-build
 
 on:
   push:
@@ -8,68 +8,61 @@ on:
 
 jobs:
   build:
-    name: fedora
+    name: debian
     runs-on: ubuntu-latest
     container:
-      image: fedora:41
+      image: debian:stable
 
     steps:
     - uses: actions/checkout@v4
-    - run: cat /etc/os-release
     - name: install dependencies
       run: |
-       dnf -y install alsa-lib-devel ant autoconf automake bc curl gambit-c
-       dnf -y install gcc git ImageMagick-devel java-17-openjdk-devel
-       dnf -y install libtool libXext-devel make mesa-libGL-devel
-       dnf -y install mesa-libGLU-devel netpbm-devel patch perl-FindBin
-       dnf -y install portaudio python3-sdkmanager sed tar tcl-devel texlive
-       dnf -y install wget zip
+        apt-get update
+        apt-get install -y \
+          libasound2-dev ant autoconf automake bc gambc gcc git imagemagick \
+          openjdk-17-jdk libtool libxext-dev make libgl1-mesa-dev \
+          libglu1-mesa-dev libnetpbm-dev libfindbin-libs-perl libportaudio2 \
+          tar tcl-dev texlive unzip wget zip
     - name: Get LambdaNative
       run: |
-       git clone https://github.com/part-cw/lambdanative
+        git clone https://github.com/part-cw/lambdanative
     - name: Copy ExpenseTracker app
       run: cp -r ExpenseTracker lambdanative/apps/
-      
     - name: setup android
       run: |
-       # https://stackoverflow.com/a/77215395
-       # https://computingforgeeks.com/install-and-use-android-studio-on-fedora/
-       mkdir -p /home/build/android-sdk
-       export ANDROID_HOME=/home/build/android-sdk
-       echo yes | sdkmanager --sdk_root=/home/build/android-sdk "platforms;android-28"
-       echo yes | sdkmanager --sdk_root=/home/build/android-sdk "build-tools;29.0.3"
-       echo yes | sdkmanager --sdk_root=/home/build/android-sdk "tools"
-       echo yes | sdkmanager --sdk_root=/home/build/android-sdk "extras;android;m2repository"
-       echo yes | sdkmanager --sdk_root=/home/build/android-sdk "ndk-bundle;r28"
-       echo yes | sdkmanager --sdk_root=/home/build/android-sdk "platform-tools"
-       echo yes | sdkmanager --sdk_root=/home/build/android-sdk --licenses
-       # https://coderwall.com/p/r09hoq/android-generate-release-debug-keystores
-       # https://stackoverflow.com/a/13578480
-       keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -noprompt -dname "CN=Unknown, OU=Unknown, O=Unknown, L=Unknown, S=Unknown, C=Unknown"
+        wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+        mkdir -p android-sdk/cmdline-tools
+        unzip -o -d android-sdk/cmdline-tools commandlinetools-linux-11076708_latest.zip
+        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk/cmdline-tools "platforms;android-28"
+        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk/cmdline-tools "build-tools;29.0.3"
+        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk/cmdline-tools "tools"
+        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk/cmdline-tools "extras;android;m2repository"
+        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk/cmdline-tools "ndk-bundle"
+        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk/cmdline-tools "platform-tools"
+        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk/cmdline-tools --licenses
+        keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -noprompt -dname "CN=Unknown, OU=Unknown, O=Unknown, L=Unknown, S=Unknown, C=Unknown"
     - name: prepare lambdanative
       working-directory: lambdanative
-      run : |
-       cp SETUP.template SETUP
-       sed -i 's/ANDROIDAPI=21/ANDROIDAPI=28/g' SETUP
-       sed -i 's|/usr/local/android-sdk-*|/home/build/android-sdk|g' SETUP
-       sed -i 's|/usr/local/android-ndk-*|/home/build/android-sdk/ndk-bundle|g' SETUP
-       cp PROFILE.template PROFILE
-       sed -i 's|SYS_ANDROIDPW="yoursecrethere"|SYS_ANDROIDPW="android"|g' PROFILE
+      run: |
+        cp SETUP.template SETUP
+        sed -i 's/ANDROIDAPI=21/ANDROIDAPI=28/g' SETUP
+        sed -i 's|/usr/local/android-sdk-*|/home/runner/work/LambdaNativeQuickStart/LambdaNativeQuickStart/android-sdk/cmdline-tools|g' SETUP
+        sed -i 's|/usr/local/android-ndk-*|/home/runner/work/LambdaNativeQuickStart/LambdaNativeQuickStart/android-sdk/cmdline-tools/ndk-bundle|g' SETUP
+        cp PROFILE.template PROFILE
+        sed -i 's|SYS_ANDROIDPW="yoursecrethere"|SYS_ANDROIDPW="android"|g' PROFILE
     - name: linux builds
       working-directory: lambdanative
       run: |
-       ./configure ExpenseTracker --verbose
-       make
+        ./configure ExpenseTracker --verbose
+        make
     - name: android builds
       working-directory: lambdanative
       run: |
-       # Fedora only provides Python3
-       sed -i 's/python/python3/g' targets/android/check-tools
-       # Make directory to avoid errors during build
-       mkdir -p /home/build/.cache/lambdanative/android/support
-       ./configure ExpenseTracker --verbose android debug
-       make
+        sed -i 's/python/python3/g' targets/android/check-tools
+        mkdir -p /home/build/.cache/lambdanative/android/support
+        ./configure ExpenseTracker --verbose android debug
+        make
     - uses: actions/upload-artifact@v4
       with:
-       name: apk
-       path: /github/home/.cache/lambdanative/packages/*.apk
+        name: apk
+        path: /github/home/.cache/lambdanative/packages/*.apk
