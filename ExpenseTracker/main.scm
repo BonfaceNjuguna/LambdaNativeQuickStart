@@ -1,7 +1,7 @@
 ;; Expense Tracker with SQLite persistence
 
 ;; --- SQLite DB setup ---
-(define dbfile "expense.sqlite")
+(define dbfile (string-append (system-directory) "/expense.sqlite"))
 (define db #f)
 
 ;; Helper to reload transaction history and balances from DB
@@ -69,9 +69,9 @@
     (textentry id amount text "Amount:" keypad numint)
     (textentry id description text "Description:")
     (button text "Save" action ,(lambda ()
-      (let* ((t (dbget 'type "Income"))
-             (amt (string->number (dbget 'amount "0")))
-             (desc (dbget 'description "")))
+      (let* ((t (uiget 'type "Income"))
+             (amt (string->number (uiget 'amount "0")))
+             (desc (uiget 'description "")))
         (if (and amt (> amt 0))
           (begin
             ;; Insert transaction into SQLite DB
@@ -136,3 +136,4 @@
   (lambda () (glgui-suspend))
   ;; resume
   (lambda () (glgui-resume))
+)
