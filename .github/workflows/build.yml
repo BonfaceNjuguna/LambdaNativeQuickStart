@@ -58,7 +58,7 @@ jobs:
     - name: linux builds
       working-directory: lambdanative
       run: |
-       ./configure ExpenseTracker
+       ./configure -v ExpenseTracker
        make
     - name: android builds
       working-directory: lambdanative
@@ -67,7 +67,7 @@ jobs:
        sed -i 's/python/python3/g' targets/android/check-tools
        # Make directory to avoid errors during build
        mkdir -p /home/build/.cache/lambdanative/android/support
-       ./configure ExpenseTracker android debug
+       ./configure -v ExpenseTracker android debug
        make
     - uses: actions/upload-artifact@v4
       with:
