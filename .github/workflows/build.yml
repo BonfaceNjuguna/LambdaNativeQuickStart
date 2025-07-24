@@ -37,7 +37,7 @@ jobs:
         yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk/cmdline-tools "build-tools;29.0.3"
         yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk/cmdline-tools "tools"
         yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk/cmdline-tools "extras;android;m2repository"
-        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk/cmdline-tools "ndk-bundle"
+        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk/cmdline-tools "ndk;21.4.7075529"
         yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk/cmdline-tools "platform-tools"
         yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk/cmdline-tools --licenses
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -noprompt -dname "CN=Unknown, OU=Unknown, O=Unknown, L=Unknown, S=Unknown, C=Unknown"
