@@ -33,21 +33,21 @@ jobs:
         wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
         mkdir -p android-sdk/cmdline-tools
         unzip -o -d android-sdk/cmdline-tools commandlinetools-linux-11076708_latest.zip
-        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk/cmdline-tools "platforms;android-28"
-        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk/cmdline-tools "build-tools;29.0.3"
-        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk/cmdline-tools "tools"
-        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk/cmdline-tools "extras;android;m2repository"
-        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk/cmdline-tools "ndk;21.4.7075529"
-        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk/cmdline-tools "platform-tools"
-        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk/cmdline-tools --licenses
+        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk "platforms;android-28"
+        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk "build-tools;29.0.3"
+        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk "tools"
+        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk "extras;android;m2repository"
+        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk "ndk;21.4.7075529"
+        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk "platform-tools"
+        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk --licenses
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -noprompt -dname "CN=Unknown, OU=Unknown, O=Unknown, L=Unknown, S=Unknown, C=Unknown"
     - name: prepare lambdanative
       working-directory: lambdanative
       run: |
         cp SETUP.template SETUP
         sed -i 's/ANDROIDAPI=21/ANDROIDAPI=28/g' SETUP
-        sed -i 's|/usr/local/android-sdk-*|/home/runner/work/LambdaNativeQuickStart/LambdaNativeQuickStart/android-sdk/cmdline-tools|g' SETUP
-        sed -i 's|/usr/local/android-ndk-*|/home/runner/work/LambdaNativeQuickStart/LambdaNativeQuickStart/android-sdk/cmdline-tools/ndk/21.4.7075529|g' SETUP
+        sed -i 's|/usr/local/android-sdk-*|/home/runner/work/LambdaNativeQuickStart/LambdaNativeQuickStart/android-sdk|g' SETUP
+        sed -i 's|/usr/local/android-ndk-*|/home/runner/work/LambdaNativeQuickStart/LambdaNativeQuickStart/android-sdk/ndk/21.4.7075529|g' SETUP
         cp PROFILE.template PROFILE
         sed -i 's|SYS_ANDROIDPW="yoursecrethere"|SYS_ANDROIDPW="android"|g' PROFILE
     - name: linux builds
