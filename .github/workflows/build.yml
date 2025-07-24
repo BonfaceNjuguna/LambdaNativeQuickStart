@@ -47,7 +47,7 @@ jobs:
         cp SETUP.template SETUP
         sed -i 's/ANDROIDAPI=21/ANDROIDAPI=28/g' SETUP
         sed -i 's|/usr/local/android-sdk-*|/home/runner/work/LambdaNativeQuickStart/LambdaNativeQuickStart/android-sdk/cmdline-tools|g' SETUP
-        sed -i 's|/usr/local/android-ndk-*|/home/runner/work/LambdaNativeQuickStart/LambdaNativeQuickStart/android-sdk/cmdline-tools/ndk-bundle|g' SETUP
+        sed -i 's|/usr/local/android-ndk-*|/home/runner/work/LambdaNativeQuickStart/LambdaNativeQuickStart/android-sdk/cmdline-tools/ndk/21.4.7075529|g' SETUP
         cp PROFILE.template PROFILE
         sed -i 's|SYS_ANDROIDPW="yoursecrethere"|SYS_ANDROIDPW="android"|g' PROFILE
     - name: linux builds
