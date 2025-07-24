@@ -26,7 +26,10 @@ jobs:
        dnf -y install wget zip
     - name: Get LambdaNative
       run: |
-       git clone https://github.com/part-cw/lambdanative
+        git clone https://github.com/part-cw/lambdanative
+    - name: Copy ExpenseTracker app
+      run: |
+        cp -r ../apps/ExpenseTracker lambdanative/apps/
     - name: setup android
       run: |
        # https://stackoverflow.com/a/77215395
