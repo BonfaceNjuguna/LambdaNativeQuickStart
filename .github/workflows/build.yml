@@ -61,6 +61,20 @@ jobs:
         mkdir -p /toolchains/llvm/prebuilt
         ln -s /home/runner/work/LambdaNativeQuickStart/LambdaNativeQuickStart/android-sdk/ndk/21.4.7075529/toolchains/llvm/prebuilt/linux-x86_64 /toolchains/llvm/prebuilt/linux-x86_64
 
+    - name: Debug NDK toolchain
+      run: |
+        ls -l /home/runner/work/LambdaNativeQuickStart/LambdaNativeQuickStart/android-sdk/ndk/21.4.7075529/toolchains/llvm/prebuilt/linux-x86_64/bin/
+        ls -l /toolchains/llvm/prebuilt/linux-x86_64/bin/
+
+    - name: Patch missing clang toolchain
+      run: |
+        if [ ! -f /toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android28-clang ] && [ -f /toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-clang ]; then
+          ln -s /toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-clang /toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android28-clang
+        fi
+        if [ ! -f /toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android28-clang++ ] && [ -f /toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-clang++ ]; then
+          ln -s /toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-clang++ /toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android28-clang++
+        fi
+
     - name: linux builds
       working-directory: lambdanative
       run: |
