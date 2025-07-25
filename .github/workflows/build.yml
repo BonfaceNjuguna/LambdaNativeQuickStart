@@ -15,6 +15,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
     - name: install dependencies
       run: |
         apt-get update
@@ -23,47 +24,62 @@ jobs:
           openjdk-17-jdk libtool libxext-dev make libgl1-mesa-dev \
           libglu1-mesa-dev libnetpbm-dev libfindbin-libs-perl libportaudio2 \
           tar tcl-dev texlive unzip wget zip
+
+    - name: Set JAVA_HOME
+      run: |
+        export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+        export PATH=$JAVA_HOME/bin:$PATH
+        java -version
+
     - name: Get LambdaNative
       run: |
         git clone https://github.com/part-cw/lambdanative
+
     - name: Copy ExpenseTracker app
       run: cp -r ExpenseTracker lambdanative/apps/
+
     - name: setup android
       run: |
-        wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-        mkdir -p android-sdk/cmdline-tools
-        unzip -o -d android-sdk/cmdline-tools commandlinetools-linux-11076708_latest.zip
-        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk "platforms;android-28"
-        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk "build-tools;29.0.3"
-        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk "tools"
-        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk "extras;android;m2repository"
-        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk "ndk;21.4.7075529"
-        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk "platform-tools"
-        yes | android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=android-sdk --licenses
+        mkdir -p $GITHUB_WORKSPACE/android-sdk/cmdline-tools/latest
+        wget -O $GITHUB_WORKSPACE/android-sdk/cmdline-tools/latest.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+        unzip -o -d $GITHUB_WORKSPACE/android-sdk/cmdline-tools/latest $GITHUB_WORKSPACE/android-sdk/cmdline-tools/latest.zip
+        export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+        export PATH=$JAVA_HOME/bin:$PATH
+        yes | $GITHUB_WORKSPACE/android-sdk/cmdline-tools/latest/cmdline-tools/bin/sdkmanager --sdk_root=$GITHUB_WORKSPACE/android-sdk "platforms;android-28"
+        yes | $GITHUB_WORKSPACE/android-sdk/cmdline-tools/latest/cmdline-tools/bin/sdkmanager --sdk_root=$GITHUB_WORKSPACE/android-sdk "build-tools;29.0.3"
+        yes | $GITHUB_WORKSPACE/android-sdk/cmdline-tools/latest/cmdline-tools/bin/sdkmanager --sdk_root=$GITHUB_WORKSPACE/android-sdk "tools"
+        yes | $GITHUB_WORKSPACE/android-sdk/cmdline-tools/latest/cmdline-tools/bin/sdkmanager --sdk_root=$GITHUB_WORKSPACE/android-sdk "extras;android;m2repository"
+        yes | $GITHUB_WORKSPACE/android-sdk/cmdline-tools/latest/cmdline-tools/bin/sdkmanager --sdk_root=$GITHUB_WORKSPACE/android-sdk "ndk;21.4.7075529"
+        yes | $GITHUB_WORKSPACE/android-sdk/cmdline-tools/latest/cmdline-tools/bin/sdkmanager --sdk_root=$GITHUB_WORKSPACE/android-sdk "platform-tools"
+        yes | $GITHUB_WORKSPACE/android-sdk/cmdline-tools/latest/cmdline-tools/bin/sdkmanager --sdk_root=$GITHUB_WORKSPACE/android-sdk --licenses
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -noprompt -dname "CN=Unknown, OU=Unknown, O=Unknown, L=Unknown, S=Unknown, C=Unknown"
+
+    - name: Verify SDK/NDK install
+      run: |
+        ls -l $GITHUB_WORKSPACE/android-sdk/ndk/
+        ls -l $GITHUB_WORKSPACE/android-sdk/ndk/21.4.7075529/toolchains/llvm/prebuilt/linux-x86_64/bin/
+
     - name: prepare lambdanative
       working-directory: lambdanative
       run: |
         cp SETUP.template SETUP
         sed -i 's/ANDROIDAPI=21/ANDROIDAPI=28/g' SETUP
-        sed -i 's|/usr/local/android-sdk-*|/home/runner/work/LambdaNativeQuickStart/LambdaNativeQuickStart/android-sdk|g' SETUP
-        sed -i 's|/usr/local/android-ndk-*|/home/runner/work/LambdaNativeQuickStart/LambdaNativeQuickStart/android-sdk/ndk/21.4.7075529|g' SETUP
-
-        echo 'export ANDROID_NDK_ROOT=/home/runner/work/LambdaNativeQuickStart/LambdaNativeQuickStart/android-sdk/ndk/21.4.7075529' >> SETUP
-        echo 'export ANDROID_SDK_ROOT=/home/runner/work/LambdaNativeQuickStart/LambdaNativeQuickStart/android-sdk' >> SETUP
+        sed -i 's|/usr/local/android-sdk-*|$GITHUB_WORKSPACE/android-sdk|g' SETUP
+        sed -i 's|/usr/local/android-ndk-*|$GITHUB_WORKSPACE/android-sdk/ndk/21.4.7075529|g' SETUP
+        echo 'export ANDROID_NDK_ROOT=$GITHUB_WORKSPACE/android-sdk/ndk/21.4.7075529' >> SETUP
+        echo 'export ANDROID_SDK_ROOT=$GITHUB_WORKSPACE/android-sdk' >> SETUP
         echo 'export PATH=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH' >> SETUP
-
         cp PROFILE.template PROFILE
         sed -i 's|SYS_ANDROIDPW="yoursecrethere"|SYS_ANDROIDPW="android"|g' PROFILE
-      
+
     - name: Fix toolchain path for LambdaNative
       run: |
         mkdir -p /toolchains/llvm/prebuilt
-        ln -s /home/runner/work/LambdaNativeQuickStart/LambdaNativeQuickStart/android-sdk/ndk/21.4.7075529/toolchains/llvm/prebuilt/linux-x86_64 /toolchains/llvm/prebuilt/linux-x86_64
+        ln -s $GITHUB_WORKSPACE/android-sdk/ndk/21.4.7075529/toolchains/llvm/prebuilt/linux-x86_64 /toolchains/llvm/prebuilt/linux-x86_64
 
     - name: Debug NDK toolchain
       run: |
-        ls -l /home/runner/work/LambdaNativeQuickStart/LambdaNativeQuickStart/android-sdk/ndk/21.4.7075529/toolchains/llvm/prebuilt/linux-x86_64/bin/
+        ls -l $GITHUB_WORKSPACE/android-sdk/ndk/21.4.7075529/toolchains/llvm/prebuilt/linux-x86_64/bin/
         ls -l /toolchains/llvm/prebuilt/linux-x86_64/bin/
 
     - name: Patch missing clang toolchain
@@ -80,7 +96,7 @@ jobs:
       run: |
         ./configure ExpenseTracker --verbose
         make
-           
+
     - name: Patch wrong clang target name
       working-directory: lambdanative
       run: |
@@ -96,6 +112,7 @@ jobs:
         mkdir -p /home/build/.cache/lambdanative/android/support
         ./configure ExpenseTracker --verbose android debug
         make
+
     - uses: actions/upload-artifact@v4
       with:
         name: apk
