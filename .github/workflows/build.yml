@@ -70,8 +70,10 @@ jobs:
     - name: Patch wrong clang target name
       working-directory: lambdanative
       run: |
-        sed -i 's/aarch64-linux-android28-clang/aarch64-linux-android-clang/g' targets/android/build
-        sed -i 's/aarch64-linux-android28-clang++/aarch64-linux-android-clang++/g' targets/android/build
+        if [ -f targets/android/build ]; then
+          sed -i 's/aarch64-linux-android28-clang/aarch64-linux-android-clang/g' targets/android/build
+          sed -i 's/aarch64-linux-android28-clang++/aarch64-linux-android-clang++/g' targets/android/build
+        fi
 
     - name: android builds
       working-directory: lambdanative
