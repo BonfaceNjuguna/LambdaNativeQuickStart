@@ -52,14 +52,27 @@ jobs:
         echo 'export ANDROID_NDK_ROOT=/home/runner/work/LambdaNativeQuickStart/LambdaNativeQuickStart/android-sdk/ndk/21.4.7075529' >> SETUP
         echo 'export ANDROID_SDK_ROOT=/home/runner/work/LambdaNativeQuickStart/LambdaNativeQuickStart/android-sdk' >> SETUP
         echo 'export PATH=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH' >> SETUP
-        
+
         cp PROFILE.template PROFILE
         sed -i 's|SYS_ANDROIDPW="yoursecrethere"|SYS_ANDROIDPW="android"|g' PROFILE
+      
+    - name: Fix toolchain path for LambdaNative
+      run: |
+        mkdir -p /toolchains/llvm/prebuilt
+        ln -s /home/runner/work/LambdaNativeQuickStart/LambdaNativeQuickStart/android-sdk/ndk/21.4.7075529/toolchains/llvm/prebuilt/linux-x86_64 /toolchains/llvm/prebuilt/linux-x86_64
+
     - name: linux builds
       working-directory: lambdanative
       run: |
         ./configure ExpenseTracker --verbose
         make
+           
+    - name: Patch wrong clang target name
+      working-directory: lambdanative
+      run: |
+        sed -i 's/aarch64-linux-android28-clang/aarch64-linux-android-clang/g' targets/android/build
+        sed -i 's/aarch64-linux-android28-clang++/aarch64-linux-android-clang++/g' targets/android/build
+
     - name: android builds
       working-directory: lambdanative
       run: |
