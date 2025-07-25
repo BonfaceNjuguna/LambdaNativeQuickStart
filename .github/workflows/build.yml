@@ -23,7 +23,7 @@ jobs:
           libasound2-dev ant autoconf automake bc gambc gcc git imagemagick \
           openjdk-17-jdk libtool libxext-dev make libgl1-mesa-dev \
           libglu1-mesa-dev libnetpbm-dev libfindbin-libs-perl libportaudio2 \
-          tar tcl-dev texlive unzip wget zip
+          tar tcl-dev texlive unzip wget zip python3
 
     - name: Set JAVA_HOME
       run: |
