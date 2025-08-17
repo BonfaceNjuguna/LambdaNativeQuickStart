@@ -40,13 +40,15 @@ jobs:
     - name: Copy ExpenseTracker app
       run: cp -r ExpenseTracker lambdanative/apps/
 
-    - name: setup android
+    - name: Setup Android SDK
       run: |
-        mkdir -p android-sdk/cmdline-tools/latest
-        wget -O android-sdk/cmdline-tools/latest.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-        unzip -o -d android-sdk/cmdline-tools/latest android-sdk/cmdline-tools/latest.zip
+        mkdir -p android-sdk/cmdline-tools
+        wget -O commandlinetools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+        unzip -o -d android-sdk/cmdline-tools commandlinetools.zip
+        mv android-sdk/cmdline-tools/cmdline-tools android-sdk/cmdline-tools/latest
         export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
         export PATH=$JAVA_HOME/bin:$PATH
+        export ANDROID_HOME=$GITHUB_WORKSPACE/android-sdk
         yes | android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=android-sdk "platforms;android-28"
         yes | android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=android-sdk "build-tools;29.0.3"
         yes | android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=android-sdk "tools"
