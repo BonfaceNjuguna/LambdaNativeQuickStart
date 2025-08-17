@@ -16,20 +16,24 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install dependencies
+    - name: Install base dependencies
       run: |
         apt-get update
         apt-get install -y \
           libasound2-dev ant autoconf automake bc gambc gcc git imagemagick \
-          openjdk-17-jdk libtool libxext-dev make libgl1-mesa-dev \
+          libtool libxext-dev make libgl1-mesa-dev \
           libglu1-mesa-dev libnetpbm-dev libfindbin-libs-perl libportaudio2 \
-          tar tcl-dev texlive unzip wget zip python3 sdkmanager
+          tar tcl-dev texlive unzip wget zip python3
 
-    - name: Set JAVA_HOME
-      run: |
-        export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-        export PATH=$JAVA_HOME/bin:$PATH
-        java -version
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 17
+        cache: gradle
+
+    - name: Verify Java
+      run: java -version
 
     - name: Get LambdaNative
       run: |
@@ -47,8 +51,6 @@ jobs:
         unzip -o -d android-sdk/cmdline-tools commandlinetools.zip
         mv android-sdk/cmdline-tools/cmdline-tools android-sdk/cmdline-tools/latest
         chmod +x android-sdk/cmdline-tools/latest/bin/sdkmanager
-        export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-        export PATH=$JAVA_HOME/bin:$PATH
         export ANDROID_HOME=$GITHUB_WORKSPACE/android-sdk
         yes | android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=android-sdk "platforms;android-28"
         yes | android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=android-sdk "build-tools;29.0.3"
