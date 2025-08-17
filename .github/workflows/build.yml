@@ -16,7 +16,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: install dependencies
+    - name: Install dependencies
       run: |
         apt-get update
         apt-get install -y \
@@ -46,6 +46,7 @@ jobs:
         wget -O commandlinetools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
         unzip -o -d android-sdk/cmdline-tools commandlinetools.zip
         mv android-sdk/cmdline-tools/cmdline-tools android-sdk/cmdline-tools/latest
+        chmod +x android-sdk/cmdline-tools/latest/bin/sdkmanager
         export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
         export PATH=$JAVA_HOME/bin:$PATH
         export ANDROID_HOME=$GITHUB_WORKSPACE/android-sdk
@@ -58,7 +59,12 @@ jobs:
         yes | android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=android-sdk --licenses
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -noprompt -dname "CN=Unknown, OU=Unknown, O=Unknown, L=Unknown, S=Unknown, C=Unknown"
 
-    - name: prepare lambdanative
+    - name: Debug SDK setup
+      run: |
+        ls -R android-sdk/
+        file android-sdk/cmdline-tools/latest/bin/sdkmanager
+
+    - name: Prepare LambdaNative
       working-directory: lambdanative
       run: |
         cp SETUP.template SETUP
@@ -85,7 +91,7 @@ jobs:
           ln -s /toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-clang++ /toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android28-clang++
         fi
 
-    - name: linux builds
+    - name: Linux build
       working-directory: lambdanative
       run: |
         ./configure ExpenseTracker --verbose
@@ -99,13 +105,18 @@ jobs:
           sed -i 's/aarch64-linux-android28-clang++/aarch64-linux-android-clang++/g' targets/android/build
         fi
 
-    - name: android builds
+    - name: Android build
       working-directory: lambdanative
       run: |
         sed -i 's/python/python3/g' targets/android/check-tools
         mkdir -p ~/.cache/lambdanative/android/support
         ./configure ExpenseTracker --verbose android debug
-        make
+        make || { echo "Android build failed"; cat config.log; exit 1; }
+
+    - name: Debug APK output
+      run: |
+        ls -R ~/.cache/lambdanative/packages/
+        find $GITHUB_WORKSPACE -name "*.apk"
 
     - uses: actions/upload-artifact@v4
       with:
