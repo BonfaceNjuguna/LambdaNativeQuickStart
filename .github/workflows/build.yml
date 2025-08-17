@@ -21,15 +21,19 @@ jobs:
         apt-get update
         apt-get install -y \
           libasound2-dev ant autoconf automake bc gambc gcc git imagemagick \
-          openjdk-17-jdk libtool libxext-dev make libgl1-mesa-dev \
+          libtool libxext-dev make libgl1-mesa-dev \
           libglu1-mesa-dev libnetpbm-dev libfindbin-libs-perl libportaudio2 \
           tar tcl-dev texlive unzip wget zip python3
 
-    - name: Set JAVA_HOME
-      run: |
-        export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-        export PATH=$JAVA_HOME/bin:$PATH
-        java -version
+    # ✅ Use setup-java instead of apt install openjdk
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        distribution: temurin
+        java-version: 17
+
+    - name: Verify Java
+      run: java -version
 
     - name: Get LambdaNative
       run: |
@@ -43,8 +47,6 @@ jobs:
         mkdir -p $GITHUB_WORKSPACE/android-sdk/cmdline-tools/latest
         wget -O $GITHUB_WORKSPACE/android-sdk/cmdline-tools/latest.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
         unzip -o -d $GITHUB_WORKSPACE/android-sdk/cmdline-tools/latest $GITHUB_WORKSPACE/android-sdk/cmdline-tools/latest.zip
-        export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-        export PATH=$JAVA_HOME/bin:$PATH
         yes | $GITHUB_WORKSPACE/android-sdk/cmdline-tools/latest/cmdline-tools/bin/sdkmanager --sdk_root=$GITHUB_WORKSPACE/android-sdk "platforms;android-28"
         yes | $GITHUB_WORKSPACE/android-sdk/cmdline-tools/latest/cmdline-tools/bin/sdkmanager --sdk_root=$GITHUB_WORKSPACE/android-sdk "build-tools;29.0.3"
         yes | $GITHUB_WORKSPACE/android-sdk/cmdline-tools/latest/cmdline-tools/bin/sdkmanager --sdk_root=$GITHUB_WORKSPACE/android-sdk "tools"
