@@ -44,12 +44,12 @@ jobs:
       working-directory: lambdanative
       run: |
         # Fix clipboard_clear function signature mismatch
-        # Show original line for debugging
-        grep -n "clipboard_clear" modules/clipboard/clipboard.scm || true
-        # Use extended regex for flexible whitespace matching
-        sed -i -E 's/\(c-lambda[[:space:]]*\(int\)[[:space:]]*int[[:space:]]*"clipboard_clear"\)/(c-lambda () int "clipboard_clear")/g' modules/clipboard/clipboard.scm
-        # Verify fix was applied
-        grep -n "clipboard_clear" modules/clipboard/clipboard.scm
+        echo "=== Before patch ==="
+        cat modules/clipboard/clipboard.scm
+        # Replace the entire define-c-lambda block for clipboard-clear
+        sed -i 's/(define clipboard-clear (c-lambda (int) int "clipboard_clear"))/(define clipboard-clear (c-lambda () int "clipboard_clear"))/g' modules/clipboard/clipboard.scm
+        echo "=== After patch ==="
+        cat modules/clipboard/clipboard.scm
 
     - name: Copy ExpenseTracker app
       run: cp -r ExpenseTracker lambdanative/apps/
