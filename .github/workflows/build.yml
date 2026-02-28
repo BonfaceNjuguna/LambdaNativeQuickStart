@@ -23,7 +23,7 @@ jobs:
           libasound2-dev ant autoconf automake bc gambc gcc git imagemagick \
           libtool libtool-bin libxext-dev make libgl1-mesa-dev \
           libglu1-mesa-dev libnetpbm-dev libfindbin-libs-perl libportaudio2 \
-          tar tcl-dev texlive unzip wget zip python3
+          tar tcl-dev texlive unzip wget zip python3 perl
 
     - name: Set up JDK 17
       uses: actions/setup-java@v4
@@ -44,11 +44,12 @@ jobs:
       working-directory: lambdanative
       run: |
         # Fix clipboard_clear function signature mismatch
-        echo "=== Before patch ==="
-        cat modules/clipboard/clipboard.scm
-        # Replace the entire define-c-lambda block for clipboard-clear
-        sed -i 's/(define clipboard-clear (c-lambda (int) int "clipboard_clear"))/(define clipboard-clear (c-lambda () int "clipboard_clear"))/g' modules/clipboard/clipboard.scm
-        echo "=== After patch ==="
+        # Show original content
+        echo "=== Original clipboard.scm ==="
+        cat -A modules/clipboard/clipboard.scm
+        # Use perl with slurp mode to handle multiline
+        perl -i -0777 -pe 's/\(c-lambda\s*\(int\)\s*int\s*"clipboard_clear"\)/(c-lambda () int "clipboard_clear")/gs' modules/clipboard/clipboard.scm
+        echo "=== Patched clipboard.scm ==="
         cat modules/clipboard/clipboard.scm
 
     - name: Copy ExpenseTracker app
