@@ -21,7 +21,7 @@ jobs:
         apt-get update
         apt-get install -y \
           libasound2-dev ant autoconf automake bc gambc gcc git imagemagick \
-          libtool libxext-dev make libgl1-mesa-dev \
+          libtool libtool-bin libxext-dev make libgl1-mesa-dev \
           libglu1-mesa-dev libnetpbm-dev libfindbin-libs-perl libportaudio2 \
           tar tcl-dev texlive unzip wget zip python3
 
