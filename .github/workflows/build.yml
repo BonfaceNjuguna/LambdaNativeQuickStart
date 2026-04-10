@@ -1,4 +1,4 @@
-name: debian-build
+name: fedora-build
 
 on:
   push:
