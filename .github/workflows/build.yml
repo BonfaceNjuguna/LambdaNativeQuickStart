@@ -14,7 +14,7 @@ jobs:
       image: fedora:43
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - run: cat /etc/os-release
     - name: install dependencies
       run: |
@@ -90,7 +90,7 @@ jobs:
         ls -R ~/.cache/lambdanative/packages/
         find $GITHUB_WORKSPACE -name "*.apk"
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: apk
         path: ~/.cache/lambdanative/packages/*.apk
