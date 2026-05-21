@@ -69,10 +69,9 @@
 
                       (if (and amt (> amt 0))
                           (begin
-                            ;; Save to DB
-                            (sqlite-query db (string-append
-                              "INSERT INTO transactions (type, amount, description) VALUES ('"
-                              t "'," (number->string amt) ",'" desc "')"))
+                            ;; Save to DB using parameterized query to prevent SQL injection
+                            (sqlite-query db "INSERT INTO transactions (type, amount, description) VALUES (?,?,?)"
+                              t amt desc)
                             ;; No reload needed, lambdas will query fresh on main
                             'main)
                           #f))))))))

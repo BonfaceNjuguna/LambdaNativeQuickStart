@@ -42,7 +42,7 @@ jobs:
        echo yes | sdkmanager --sdk_root=/home/build/android-sdk "build-tools;29.0.3"
        echo yes | sdkmanager --sdk_root=/home/build/android-sdk "tools"
        echo yes | sdkmanager --sdk_root=/home/build/android-sdk "extras;android;m2repository"
-       echo yes | sdkmanager --sdk_root=/home/build/android-sdk "ndk-bundle;r28"
+       echo yes | sdkmanager --sdk_root=/home/build/android-sdk "ndk;21.4.7075529"
        echo yes | sdkmanager --sdk_root=/home/build/android-sdk "platform-tools"
        echo yes | sdkmanager --sdk_root=/home/build/android-sdk --licenses
        # https://coderwall.com/p/r09hoq/android-generate-release-debug-keystores
@@ -54,7 +54,9 @@ jobs:
        cp SETUP.template SETUP
        sed -i 's/ANDROIDAPI=21/ANDROIDAPI=28/g' SETUP
        sed -i 's|/usr/local/android-sdk-*|/home/build/android-sdk|g' SETUP
-       sed -i 's|/usr/local/android-ndk-*|/home/build/android-sdk/ndk-bundle|g' SETUP
+       sed -i 's|/usr/local/android-ndk-*|/home/build/android-sdk/ndk/21.4.7075529|g' SETUP
+       echo 'export ANDROID_NDK_ROOT=/home/build/android-sdk/ndk/21.4.7075529' >> SETUP
+       echo 'export ANDROID_SDK_ROOT=/home/build/android-sdk' >> SETUP
        cp PROFILE.template PROFILE
        sed -i 's|SYS_ANDROIDPW="yoursecrethere"|SYS_ANDROIDPW="android"|g' PROFILE
        sed -i 's|SYS_CC="gcc $SYS|SYS_CC="gcc-14 $SYS|g' targets/linux/host_linux
@@ -78,6 +80,21 @@ jobs:
       run: |
         ./configure ExpenseTracker --verbose
         make
+    - name: Patch clang toolchain for Android
+      run: |
+        NDK_TOOLCHAIN=/home/build/android-sdk/ndk/21.4.7075529/toolchains/llvm/prebuilt/linux-x86_64/bin
+        if [ ! -f "$NDK_TOOLCHAIN/aarch64-linux-android28-clang" ] && [ -f "$NDK_TOOLCHAIN/aarch64-linux-android-clang" ]; then
+          ln -s "$NDK_TOOLCHAIN/aarch64-linux-android-clang" "$NDK_TOOLCHAIN/aarch64-linux-android28-clang"
+        fi
+        if [ ! -f "$NDK_TOOLCHAIN/aarch64-linux-android28-clang++" ] && [ -f "$NDK_TOOLCHAIN/aarch64-linux-android-clang++" ]; then
+          ln -s "$NDK_TOOLCHAIN/aarch64-linux-android-clang++" "$NDK_TOOLCHAIN/aarch64-linux-android28-clang++"
+        fi
+        if [ ! -f "$NDK_TOOLCHAIN/armv7a-linux-androideabi28-clang" ] && [ -f "$NDK_TOOLCHAIN/armv7a-linux-androideabi-clang" ]; then
+          ln -s "$NDK_TOOLCHAIN/armv7a-linux-androideabi-clang" "$NDK_TOOLCHAIN/armv7a-linux-androideabi28-clang"
+        fi
+        if [ ! -f "$NDK_TOOLCHAIN/armv7a-linux-androideabi28-clang++" ] && [ -f "$NDK_TOOLCHAIN/armv7a-linux-androideabi-clang++" ]; then
+          ln -s "$NDK_TOOLCHAIN/armv7a-linux-androideabi-clang++" "$NDK_TOOLCHAIN/armv7a-linux-androideabi28-clang++"
+        fi
     - name: Android build
       working-directory: lambdanative
       run: |
