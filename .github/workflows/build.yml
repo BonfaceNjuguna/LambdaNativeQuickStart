@@ -97,14 +97,25 @@ jobs:
         fi
         cd "$JPEG_DIR"
 
-        # Replace ./libtool with a wrapper that always passes --tag=CC
-        # The real issue: libtool can't infer the tag when CC contains flags
-        printf '#!/bin/sh\nexec /usr/bin/libtool --tag=CC "$@"\n' > ./libtool
-        chmod +x ./libtool
+        # Bypass libtool entirely - compile jpeg-6b as a plain static library
+        CC="gcc-14 -DLINUX -fcommon"
+        CFLAGS="-O2 -I$HOME/.cache/lambdanative/linux/include -I."
 
-        # Rebuild jpeg-6b with the fixed libtool
-        gmake clean || true
-        gmake -j9 libjpeg.a
+        SOURCES="jcapimin.c jcapistd.c jctrans.c jcparam.c jdatadst.c jcinit.c
+          jcmaster.c jcmarker.c jcmainct.c jccoefct.c jccolor.c jcdctmgr.c
+          jchuff.c jcprepct.c jcsample.c jfdctfst.c jfdctflt.c jfdctint.c
+          jdapimin.c jdapistd.c jdtrans.c jdatasrc.c jdmaster.c jdinput.c
+          jdmarker.c jdhuff.c jdmainct.c jdcoefct.c jdpostct.c jddctmgr.c
+          jidctfst.c jidctflt.c jidctint.c jidctred.c jdsample.c jdcolor.c
+          jquant1.c jquant2.c jdmerge.c jcomapi.c jutils.c jerror.c
+          jmemmgr.c jmemnobs.c"
+
+        rm -f *.o libjpeg.a
+        for src in $SOURCES; do
+          $CC $CFLAGS -c "$src"
+        done
+        ar crs libjpeg.a *.o
+        ranlib libjpeg.a
 
         # Install to the LambdaNative prefix
         PREFIX="$HOME/.cache/lambdanative/linux"
