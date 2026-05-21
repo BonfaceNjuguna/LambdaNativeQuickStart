@@ -97,19 +97,24 @@ jobs:
         fi
         cd "$JPEG_DIR"
 
-        # jpeg-6b is too old for autoreconf (no configure.ac)
-        # Refresh ltmain.sh and support files with system libtool
-        libtoolize --force --copy --install
+        # Replace the ancient generated ./libtool with system libtool (knows modern gcc tags)
+        cp /usr/bin/libtool ./libtool
 
-        # Re-run configure to regenerate the libtool script from fresh ltmain.sh
-        if [ -f configure ]; then
-          ./configure
-        fi
-
-        # Fallback: if libtool still can't infer tag, patch Makefile directly
+        # Also patch Makefile to explicitly pass --tag=CC as belt-and-suspenders
         if [ -f Makefile ]; then
-          sed -i 's/\$(LIBTOOL) --mode/$(LIBTOOL) --tag=CC --mode/g' Makefile
+          sed -i 's|./libtool --mode=compile|./libtool --tag=CC --mode=compile|g' Makefile
+          sed -i 's|./libtool --mode=link|./libtool --tag=CC --mode=link|g' Makefile
         fi
+
+        # Rebuild jpeg-6b with the fixed libtool
+        gmake clean || true
+        gmake -j9 libjpeg.a
+
+        # Install to the LambdaNative prefix
+        PREFIX="$HOME/.cache/lambdanative/linux"
+        mkdir -p "$PREFIX/lib" "$PREFIX/include"
+        cp libjpeg.a "$PREFIX/lib/"
+        cp jpeglib.h jconfig.h jmorecfg.h jerror.h "$PREFIX/include/"
 
     - name: Linux build (second pass)
       working-directory: lambdanative
