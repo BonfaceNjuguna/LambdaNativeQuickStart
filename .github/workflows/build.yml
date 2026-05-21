@@ -11,22 +11,27 @@ jobs:
     name: fedora
     runs-on: ubuntu-latest
     container:
-      image: fedora:41
+      image: fedora:43
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - run: cat /etc/os-release
     - name: install dependencies
       run: |
        dnf -y install alsa-lib-devel ant autoconf automake bc curl gambit-c
-       dnf -y install gcc git ImageMagick-devel java-17-openjdk-devel
+       dnf -y install gcc-14 git grep ImageMagick-devel java-25-openjdk-devel
        dnf -y install libtool libXext-devel make mesa-libGL-devel
        dnf -y install mesa-libGLU-devel netpbm-devel patch perl-FindBin
        dnf -y install portaudio python3-sdkmanager sed tar tcl-devel texlive
-       dnf -y install wget zip
+       dnf -y install which wget zip
     - name: Get LambdaNative
       run: |
        git clone https://github.com/part-cw/lambdanative
+       cd lambdanative
+       git checkout b6e82ee343d8ea3c95e277d7e122baae9a5dc096
+       cd modules
+       rm -rf gps
+       git clone https://github.com/rabsss/gps_module gps
     - name: setup android
       run: |
        # https://stackoverflow.com/a/77215395
@@ -52,21 +57,40 @@ jobs:
        sed -i 's|/usr/local/android-ndk-*|/home/build/android-sdk/ndk-bundle|g' SETUP
        cp PROFILE.template PROFILE
        sed -i 's|SYS_ANDROIDPW="yoursecrethere"|SYS_ANDROIDPW="android"|g' PROFILE
-    - name: linux builds
+       sed -i 's|SYS_CC="gcc $SYS|SYS_CC="gcc-14 $SYS|g' targets/linux/host_linux
+       sed -i 's|SYS_CXX="g++ $SYS|SYS_CXX="g++-13 $SYS|g' targets/linux/host_linux
+       sed -i 's|gcc -Werror|gcc-14 -Werror|g' targets/linux/check-libraries
+    - name: Patch clipboard module bug
       working-directory: lambdanative
       run: |
-       ./configure Calculator
-       make
-    - name: android builds
+        # Fix clipboard_clear function signature mismatch
+        # Show original content
+        echo "=== Original clipboard.scm ==="
+        cat -A modules/clipboard/clipboard.scm
+        # Use perl with slurp mode to handle multiline
+        perl -i -0777 -pe 's/\(c-lambda\s*\(int\)\s*int\s*"clipboard_clear"\)/(c-lambda () int "clipboard_clear")/gs' modules/clipboard/clipboard.scm
+        echo "=== Patched clipboard.scm ==="
+        cat modules/clipboard/clipboard.scm
+    - name: Copy ExpenseTracker app
+      run: cp -r ExpenseTracker lambdanative/apps/
+    - name: Linux build
       working-directory: lambdanative
       run: |
-       # Fedora only provides Python3
-       sed -i 's/python/python3/g' targets/android/check-tools
-       # Make directory to avoid errors during build
-       mkdir -p /home/build/.cache/lambdanative/android/support
-       ./configure Calculator android debug
-       make
-    - uses: actions/upload-artifact@v4
+        ./configure ExpenseTracker --verbose
+        make
+    - name: Android build
+      working-directory: lambdanative
+      run: |
+        sed -i 's/python/python3/g' targets/android/check-tools
+        mkdir -p ~/.cache/lambdanative/android/support
+        ./configure ExpenseTracker --verbose android debug
+        make || { echo "Android build failed"; cat config.log; exit 1; }
+    - name: Debug APK output
+      run: |
+        ls -R ~/.cache/lambdanative/packages/
+        find $GITHUB_WORKSPACE -name "*.apk"
+
+    - uses: actions/upload-artifact@v7
       with:
-       name: apk
-       path: /github/home/.cache/lambdanative/packages/*.apk
+        name: apk
+        path: ~/.cache/lambdanative/packages/*.apk
