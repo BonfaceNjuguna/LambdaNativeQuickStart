@@ -24,6 +24,7 @@ jobs:
        dnf -y install mesa-libGLU-devel netpbm-devel patch perl-FindBin
        dnf -y install portaudio python3-sdkmanager sed tar tcl-devel texlive
        dnf -y install which wget zip
+       dnf -y install m4 pkgconf-pkg-config gettext-devel autoconf-archive
     - name: Get LambdaNative
       run: |
        git clone https://github.com/part-cw/lambdanative
@@ -83,18 +84,33 @@ jobs:
     - name: Fix libtool tag issue (jpeg-6b) and rebuild it
       working-directory: lambdanative
       run: |
-        JPEG_DIR="$HOME/.lambdanative/tmp_install/jpeg-6b"
-        test -d "$JPEG_DIR"
+        set -euxo pipefail
 
-        echo "Regenerating autotools in $JPEG_DIR"
+        JPEG_DIR="$HOME/.lambdanative/tmp_install/jpeg-6b"
+        ls -la "$HOME/.lambdanative/tmp_install" || true
+        test -d "$JPEG_DIR"
         cd "$JPEG_DIR"
 
-        # Ensure required tools exist (defensive; should already be installed)
-        command -v libtoolize
-        command -v autoreconf
+        echo "=== jpeg-6b tooling versions ==="
+        libtoolize --version || true
+        autoreconf --version || true
+        autoconf --version || true
+        automake --version || true
 
-        libtoolize --force --copy
-        autoreconf -fi
+        echo "=== jpeg-6b directory listing ==="
+        ls -la
+
+        # Force-refresh libtool bits
+        libtoolize --force --copy --install
+
+        # Regenerate configure scripts
+        aclocal -I m4 || aclocal
+        autoconf
+        autoheader || true
+        automake --add-missing --copy --force-missing || true
+
+        # Final sanity: rerun autoreconf to ensure all generated files are consistent
+        autoreconf -vfi
 
     - name: Linux build
       working-directory: lambdanative
