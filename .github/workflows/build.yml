@@ -75,6 +75,22 @@ jobs:
         cat modules/clipboard/clipboard.scm
     - name: Copy ExpenseTracker app
       run: cp -r ExpenseTracker lambdanative/apps/
+    - name: Fix libtool tag issue (jpeg-6b)
+      working-directory: lambdanative
+      run: |
+        # Trigger LambdaNative to fetch/unpack deps by running a lightweight configure
+        ./configure ExpenseTracker --verbose || true
+
+        JPEG_DIR="$HOME/.lambdanative/tmp_install/jpeg-6b"
+        if [ -d "$JPEG_DIR" ]; then
+          echo "Patching $JPEG_DIR to regenerate libtool/autotools files..."
+          cd "$JPEG_DIR"
+          libtoolize --force --copy || true
+          autoreconf -fi
+        else
+          echo "jpeg-6b directory not present yet: $JPEG_DIR"
+          echo "If this persists, move this step after the first dependency unpack step or after a failing build attempt."
+        fi
     - name: Linux build
       working-directory: lambdanative
       run: |
