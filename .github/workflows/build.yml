@@ -81,38 +81,25 @@ jobs:
       run: |
         ./configure ExpenseTracker --verbose
 
-    - name: Fix libtool tag issue (jpeg-6b) and rebuild it
+    - name: Linux build (first pass to unpack deps)
+      working-directory: lambdanative
+      run: |
+        make || true
+
+    - name: Fix libtool tag issue (jpeg-6b) if present
       working-directory: lambdanative
       run: |
         set -euxo pipefail
-
         JPEG_DIR="$HOME/.lambdanative/tmp_install/jpeg-6b"
-        ls -la "$HOME/.lambdanative/tmp_install" || true
-        test -d "$JPEG_DIR"
+        if [ ! -d "$JPEG_DIR" ]; then
+          echo "jpeg-6b still not present; nothing to patch."
+          exit 0
+        fi
         cd "$JPEG_DIR"
-
-        echo "=== jpeg-6b tooling versions ==="
-        libtoolize --version || true
-        autoreconf --version || true
-        autoconf --version || true
-        automake --version || true
-
-        echo "=== jpeg-6b directory listing ==="
-        ls -la
-
-        # Force-refresh libtool bits
         libtoolize --force --copy --install
-
-        # Regenerate configure scripts
-        aclocal -I m4 || aclocal
-        autoconf
-        autoheader || true
-        automake --add-missing --copy --force-missing || true
-
-        # Final sanity: rerun autoreconf to ensure all generated files are consistent
         autoreconf -vfi
 
-    - name: Linux build
+    - name: Linux build (second pass)
       working-directory: lambdanative
       run: |
         make
