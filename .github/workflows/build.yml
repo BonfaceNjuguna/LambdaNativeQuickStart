@@ -96,8 +96,20 @@ jobs:
           exit 0
         fi
         cd "$JPEG_DIR"
+
+        # jpeg-6b is too old for autoreconf (no configure.ac)
+        # Refresh ltmain.sh and support files with system libtool
         libtoolize --force --copy --install
-        autoreconf -vfi
+
+        # Re-run configure to regenerate the libtool script from fresh ltmain.sh
+        if [ -f configure ]; then
+          ./configure
+        fi
+
+        # Fallback: if libtool still can't infer tag, patch Makefile directly
+        if [ -f Makefile ]; then
+          sed -i 's/\$(LIBTOOL) --mode/$(LIBTOOL) --tag=CC --mode/g' Makefile
+        fi
 
     - name: Linux build (second pass)
       working-directory: lambdanative
