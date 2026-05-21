@@ -97,14 +97,10 @@ jobs:
         fi
         cd "$JPEG_DIR"
 
-        # Replace the ancient generated ./libtool with system libtool (knows modern gcc tags)
-        cp /usr/bin/libtool ./libtool
-
-        # Also patch Makefile to explicitly pass --tag=CC as belt-and-suspenders
-        if [ -f Makefile ]; then
-          sed -i 's|./libtool --mode=compile|./libtool --tag=CC --mode=compile|g' Makefile
-          sed -i 's|./libtool --mode=link|./libtool --tag=CC --mode=link|g' Makefile
-        fi
+        # Replace ./libtool with a wrapper that always passes --tag=CC
+        # The real issue: libtool can't infer the tag when CC contains flags
+        printf '#!/bin/sh\nexec /usr/bin/libtool --tag=CC "$@"\n' > ./libtool
+        chmod +x ./libtool
 
         # Rebuild jpeg-6b with the fixed libtool
         gmake clean || true
